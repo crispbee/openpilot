@@ -39,6 +39,7 @@ class CarController:
     self.last_standstill = False
     self.standstill_req = False
     self.steer_rate_counter = 0
+    self.enable_condition_counter = 0
 
     self.packer = CANPacker(dbc_name)
     self.gas = 0
@@ -99,9 +100,10 @@ class CarController:
       need_to_winddown = False  # abs(CS.out.steeringAngleDeg) > abs(actuators.steeringAngleDeg) and abs(CS.out.steeringAngleDeg) - abs(actuators.steeringAngleDeg) > 4
       enable_condition = abs(CS.out.steeringTorqueEps) < MAX_STEER_TORQUE and \
                          abs(CS.out.steeringTorque) < MAX_DRIVER_TORQUE_ALLOWANCE and not need_to_winddown
-      setme_x64 = 100 if enable_condition else 0
+      # setme_x64 = 100 if enable_condition else 0
+      self.enable_condition_counter = self.enable_condition_counter + 1 if not enable_condition else 0
       # lta_active = lta_active and enable_condition
-      can_sends.append(create_lta_steer_command(self.packer, self.last_angle, lta_active, self.frame // 2, setme_x64))
+      can_sends.append(create_lta_steer_command(self.packer, self.last_angle, lta_active, self.frame // 2, self.enable_condition_counter))
 
     # *** gas and brake ***
     if self.CP.enableGasInterceptor and CC.longActive:
